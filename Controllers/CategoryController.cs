@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using dot_net_web_api.Models;
+using dotnet_web_api.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
 namespace dotnet_web_api.Controllers
@@ -18,17 +19,25 @@ namespace dotnet_web_api.Controllers
         [HttpGet]
         public IActionResult getCategories([FromQuery] string SearchValue = "")
         {
-            if (SearchValue != null)
+            // if (SearchValue != null)
+            // {
+            //     var SearchedCategories = categories.Where(c => c.Name != null && c.Name.Contains(SearchValue, StringComparison.OrdinalIgnoreCase)).ToList();
+            //     return Ok(SearchedCategories);
+            // }
+
+           var categoryList = categories.Select (c=> new CategoryReadDto
             {
-                var SearchedCategories = categories.Where(c => c.Name != null && c.Name.Contains(SearchValue, StringComparison.OrdinalIgnoreCase)).ToList();
-                return Ok(SearchedCategories);
-            }
-            return Ok(categories);
+                CategoryId = c.CategoryId,
+                Name = c.Name,
+                Description = c.Description,
+                CreatedAt = c.CreatedAt
+            }).ToList();
+            return Ok(categoryList);
         }
 
         // POST: api/categories => create a category
         [HttpPost]
-        public IActionResult CreateCategories([FromBody] Category CatData)
+        public IActionResult CreateCategories([FromBody] CategoryCreateDto CatData)
         {
 
             if (string.IsNullOrEmpty(CatData.Name))
@@ -50,7 +59,17 @@ namespace dotnet_web_api.Controllers
             };
             categories.Add(Category1);
 
-            return Created($"/api/Categories/{Category1.CategoryId}", Category1);
+            //making a dto copy of the created category to return in the response
+            var CategoryReadDto = new CategoryReadDto
+            {
+                CategoryId = Category1.CategoryId,
+                Name = Category1.Name,
+                Description = Category1.Description,
+                CreatedAt = Category1.CreatedAt
+            };
+            
+
+            return Created($"/api/Categories/{Category1.CategoryId}", CategoryReadDto);
         }
 
         // DELETE: api/categories/{catID} => delete a category by ID
@@ -71,7 +90,7 @@ namespace dotnet_web_api.Controllers
 
         // PUT: api/categories/{catID} => update a category by ID
         [HttpPut("{CatID:guid}")]
-        public IActionResult UpdateCategory(Guid CatID, [FromBody] Category CatData)
+        public IActionResult UpdateCategory(Guid CatID, [FromBody] CategoryCreateDto CatData)
         {
             var foundCategory = categories.FirstOrDefault(category => category.CategoryId == CatID);
 
